@@ -46,7 +46,7 @@
       <p class="panel-output-parag">Cidade de origem: {{departureCity}} </p>
       <p class="panel-output-parag">País de destino: {{arrivalCountry}} </p>
       <p class="panel-output-parag">Cidade de destino: {{arrivalCity}} </p>
-      <p class="panel-output-parag">distâmcia: 19 km </p>
+      <p class="panel-output-parag">distâmcia: {{distance}} km </p>
       <p class="panel-output-parag"> {{adults}} adulto(s), {{children}} criança(s) </p>
       <p class="panel-output-parag">Tipo de vôo Classe {{selectedClass}} </p>
       <p class="panel-output-parag">R$ 19,00 por adulto </p>
@@ -60,6 +60,8 @@
 </template>
 
 <script>
+// import { getDistance, getLatitude, getLongitude } from '../src/services';
+import { getLatitude, getLongitude, getDistance } from '../src/services/service';
 
 export default {
   data(){
@@ -77,55 +79,68 @@ export default {
       selectedClass: null,
       usedMiles: 19,
       maxMiles: 1000,
-
+      distance: 19,
     }
+  },
+
+  computed: {
+    
+    originLatitude: function () {
+      return getLatitude(this.departureCities, this.departureCity);
+    },
+
+    originLongitude: function () {
+      return getLongitude(this.departureCities, this.departureCity);
+    },
+
+    arrivalLatitude: function () {
+      return getLatitude(this.arrivalCities, this.arrivalCity);
+    },
+
+    arrivalLongitude: function () {
+      return getLongitude(this.arrivalCities, this.arrivalCity);
+    },
   },
 
   watch: {
-    departureCountry: function (newV,oldV) {
+    departureCountry: function (newV, oldV) {
       console.log(`departureCountry Watched - ${oldV}`);
       fetch(`${this.baseUrl}?country=${newV}`)
         .then(res => res.json())
-          .then(data => {
-            this.departureCities = data[0].cities;
-            console.log(data[0].cities);
-          });
+        .then(data => {
+          this.departureCities = data[0].cities;
+        });
     },
 
-    arrivalCountry: function(newV, oldV){
+    arrivalCountry: function (newV, oldV) {
       console.log(`departureCity Watched - ${oldV}`);
       fetch(`${this.baseUrl}?country=${newV}`)
         .then(res => res.json())
-          .then(data => {
-            this.arrivalCities = data[0].cities;
-            console.log(data[0].cities);
-          });
+        .then(data => {
+          this.arrivalCities = data[0].cities;
+        });
+    },
+
+    arrivalCity: function () {
+      this.distance = getDistance(this.originLatitude, this.originLongitude, this.arrivalLatitude, this.arrivalLongitude).toFixed(3);
+      this.distance = this.distance.replace(".", ",");
     }
   },
 
-  beforeMount(){
+  beforeMount() {
     fetch(this.baseUrl)
       .then(res => res.json())
-        .then(data => {
-          for(let i = 0; i < data.length; i++){
-            this.countries.push(data[i]);
-            console.log(data[i],typeof(data[i]));
-          }
-          console.log(this.countries)
-        });
+      .then(data => {
+        for (let i = 0; i < data.length; i++) {
+          this.countries.push(data[i]);
+          console.log(data[i], typeof (data[i]));
+        }
+        console.log(this.countries)
+      });
   },
 
 
 }
-
-
-
-
-
-
-
-
-
 
 </script>
 
