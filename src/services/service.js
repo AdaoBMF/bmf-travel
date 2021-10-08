@@ -56,9 +56,52 @@ const getLongitude = (targetCities, targetCity) => {
   }
 }
 
-const teste = ()=>{
-  return 2+98;
+const calculateAdultFee = (
+  international,
+  selectedClass,
+  distance
+) => {
+  if (international) {
+    if (selectedClass === 'Econômica') {
+      return distance * 0.5;
+
+    } else {
+      return (distance * 0.5) * 1.8
+    }
+  } else {
+    if (selectedClass === 'Econômica') {
+      return distance * 0.3
+    } else {
+      return (distance * 0.3) * 1.8
+    }
+  }
 }
+
+const calculateChildrenFee = (
+  international,
+  selectedClass,
+  distance
+) => {
+  if (international) {
+    if (selectedClass === 'Econômica') {
+      return distance * 0.25;
+
+    } else {
+      return (distance * 0.25) * 1.4
+    }
+  } else {
+    if (selectedClass === 'Econômica') {
+      return distance * 0.15
+    } else {
+      return (distance * 0.3) * 1.4
+    }
+  }
+}
+
+// const calculatePrice = (adults, children, adultFee, childrenFee,miles) => {
+
+// }
+
 
 
 export{
@@ -66,5 +109,7 @@ export{
   getLatitude,
   getLongitude,
   degreesToRadians,
-  teste
+  calculateAdultFee,
+  calculateChildrenFee
+  
 }

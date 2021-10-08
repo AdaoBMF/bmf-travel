@@ -16,27 +16,27 @@
           <option v-for="country, index in countries" :key="index" :value="country.country">{{country.country}}</option>
         </select>
         <label for="departure-city">Cidade de Origem</label>
-        <select v-model="departureCity" name="departure-city" id="panel-input-form-departure-city">
+        <select :disabled="!departureCountry" v-model="departureCity" name="departure-city" id="panel-input-form-departure-city">
           <option v-for="city, index in departureCities" :key="index" :value="city.city">{{city.city}}</option>
         </select>
-        <label for="arrival-country">País de destino</label>
-        <select v-model="arrivalCountry" name="arrival-country" id="panel-input-form-arrival-country">
+        <label  for="arrival-country">País de destino</label>
+        <select :disabled="!departureCity" v-model="arrivalCountry" name="arrival-country" id="panel-input-form-arrival-country">
           <option v-for="country, index in countries" :key="index" :value="country.country">{{country.country}}</option>
         </select>
         <label for="arrival-city">Cidade de destino</label>
-        <select v-model="arrivalCity" name="arrival-city" id="panel-input-form-arrival-city">
+        <select :disabled="!arrivalCountry" v-model="arrivalCity" name="arrival-city" id="panel-input-form-arrival-city">
           <option v-for="city, index in arrivalCities" :key="index" :value="city.city">{{city.city}}</option>
         </select>
         <label for="adults">Adultos</label>
-        <input v-model="adults" type="number" name="panel-input-form-adults"/>
+        <input v-model="adults" min="0" type="number" name="panel-input-form-adults"/>
         <label for="children">Crianças</label>
-        <input v-model="children" type="number" name="children" id="panel-input-form-children">
+        <input :disabled="adults < 1" v-model="children" type="number" name="children" min="0" id="panel-input-form-children">
         <div id="panel-input-forrm-class">
           <label class="input-class" for="panel-input-form-economic"><input v-model="selectedClass" type="radio" name="class" id="panel-input-form-economy" value="Econômica"> Econômica</label>
           <label class="input-class" for="panel-input-form-executive"><input v-model="selectedClass" type="radio" name="class" id="panel-input-form-executive" value="Executiva"> Executiva</label>
         </div>
-        <label for="miles">Utilizar {{usedMiles}} milhas</label>
-        <input v-model="usedMiles" type="range" name="miles" id="panel-input-form-miles" min="0" :max="maxMiles" >
+        <label for="miles">Utilizar {{usedMiles}} / {{Math.floor(maxMiles)}} milhas</label>
+        <input v-model="usedMiles" type="range" step="100" name="miles" id="panel-input-form-miles" min="0" :max="maxMiles" >
       </form>
     </div>
     <!-- output area -->
@@ -45,15 +45,15 @@
       <p class="panel-output-parag">País de origem: {{departureCountry}} </p>
       <p class="panel-output-parag">Cidade de origem: {{departureCity}} </p>
       <p class="panel-output-parag">País de destino: {{arrivalCountry}} </p>
-      <p class="panel-output-parag">Cidade de destino: {{arrivalCity}} </p>
-      <p class="panel-output-parag">distâmcia: {{distance}} km </p>
+      <p class="panel-output-parag">Cidade de destino: <span v-if="arrivalCity!==departureCity">{{arrivalCity}}</span><span v-if="arrivalCity===departureCity">Cidade inválida</span> </p>
+      <p class="panel-output-parag">distâmcia: {{distance.toFixed(2)}} km </p>
       <p class="panel-output-parag"> {{adults}} adulto(s), {{children}} criança(s) </p>
       <p class="panel-output-parag">Tipo de vôo Classe {{selectedClass}} </p>
-      <p class="panel-output-parag">R$ 19,00 por adulto </p>
-      <p class="panel-output-parag">R$ 7,00 por criança </p>
-      <p class="panel-output-parag">Milhas: {{usedMiles}} </p>
-      <p class="panel-output-parag">Valor abatido por milhas: R$ 19,00 </p>
-      <p class="panel-output-parag">Total: R$ 19,00 </p>
+      <p class="panel-output-parag">R$ {{adultFee}} por adulto </p>
+      <p class="panel-output-parag">R$ {{childrenFee}} por criança </p>
+      <p class="panel-output-parag">Milhas: {{usedMiles}}</p>
+      <p class="panel-output-parag">Valor abatido por milhas: R$ {{milesValue.toFixed(2)}} </p>
+      <p class="panel-output-parag">Total: R$ {{finalPrice.toFixed(2)}} </p>
     </div>
   </section>
 </main>
@@ -61,7 +61,7 @@
 
 <script>
 // import { getDistance, getLatitude, getLongitude } from '../src/services';
-import { getLatitude, getLongitude, getDistance } from '../src/services/service';
+import { getLatitude, getLongitude, getDistance, calculateAdultFee, calculateChildrenFee } from '../src/services/service';
 
 export default {
   data(){
@@ -76,9 +76,9 @@ export default {
       arrivalCity: null,
       adults: 1,
       children: 0,
-      selectedClass: null,
-      usedMiles: 19,
-      maxMiles: 1000,
+      selectedClass: 'Econômica',
+      usedMiles: 0,
+      maxMiles: 100,
       distance: 19,
     }
   },
@@ -100,6 +100,28 @@ export default {
     arrivalLongitude: function () {
       return getLongitude(this.arrivalCities, this.arrivalCity);
     },
+
+    international: function (){
+      return this.departureCountry !== this.arrivalCountry;
+    },
+
+    adultFee: function(){
+      return calculateAdultFee( this.international, this.selectedClass, this.distance).toFixed(2);
+    },
+    childrenFee: function(){
+      return calculateChildrenFee( this.international, this.selectedClass, this.distance).toFixed(2);
+    },
+
+    grossPrice: function() {
+      return (this.adults * this.adultFee)+(this.children*this.childrenFee);
+    },
+    milesValue: function(){
+      return this.usedMiles * 0.02;
+    },
+    finalPrice: function(){
+      return this.grossPrice - this.milesValue;
+    },
+
   },
 
   watch: {
@@ -122,9 +144,17 @@ export default {
     },
 
     arrivalCity: function () {
-      this.distance = getDistance(this.originLatitude, this.originLongitude, this.arrivalLatitude, this.arrivalLongitude).toFixed(3);
-      this.distance = this.distance.replace(".", ",");
-    }
+      this.distance = getDistance(this.originLatitude, this.originLongitude, this.arrivalLatitude, this.arrivalLongitude);
+      // this.distance = this.distance.replace(".", ",");
+    },
+    adults: function(){
+      if(this.adults<1){
+        this.children = 0;
+      }
+    },
+    grossPrice: function(){
+      this.maxMiles = this.grossPrice/0.02;
+    },
   },
 
   beforeMount() {
@@ -176,13 +206,20 @@ export default {
 
 #panel {
   margin: 1rem 0 0 1rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
 }
 
 #panel-input {
   display: flex;
-  border: 1px solid #000;
+  justify-content: space-around;
+  border: 3px solid #000;
+  border-radius: .5rem;
   width: 30%;
-  min-width: 200px;
+  height:fit-content;
+  min-width: 300px;
+  padding: 1rem;
 }
 
 #panel-input-form {
@@ -193,6 +230,10 @@ export default {
   margin: auto;
 }
 
+#panel-input-form input, label{
+  margin: .5rem .25rem;
+}
+
 .input-class {
   display: inline-flex;
 }
@@ -201,10 +242,11 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
-  border: 1px solid #000;
+  border: 3px solid #000;
+  border-radius: .5rem;;
   width: 30%;
-  min-width: 200px;
-  margin-top: 1rem;
+  min-width: 300px;
+  
 }
 
 #panel-output-title {
